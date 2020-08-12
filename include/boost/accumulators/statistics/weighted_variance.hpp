@@ -8,6 +8,7 @@
 #ifndef BOOST_ACCUMULATORS_STATISTICS_WEIGHTED_VARIANCE_HPP_EAN_28_10_2005
 #define BOOST_ACCUMULATORS_STATISTICS_WEIGHTED_VARIANCE_HPP_EAN_28_10_2005
 
+#include <boost/typeof/decltype.hpp>
 #include <boost/mpl/placeholders.hpp>
 #include <boost/accumulators/framework/accumulator_base.hpp>
 #include <boost/accumulators/framework/extractor.hpp>
@@ -39,7 +40,9 @@ namespace impl
     struct lazy_weighted_variance_impl
       : accumulator_base
     {
-        typedef typename numeric::functional::multiplies<Sample, Weight>::result_type weighted_sample;
+		typedef BOOST_TYPEOF(numeric::pow(declval<Sample>(), mpl::int_<2>())) sum_type;
+
+        typedef typename numeric::functional::multiplies<sum_type, Weight>::result_type weighted_sample;
         // for boost::result_of
         typedef typename numeric::functional::fdiv<weighted_sample, Weight>::result_type result_type;
 
@@ -49,7 +52,7 @@ namespace impl
         result_type result(Args const &args) const
         {
             extractor<MeanFeature> const some_mean = {};
-            result_type tmp = some_mean(args);
+            const auto tmp = some_mean(args);
             return accumulators::weighted_moment<2>(args) - tmp * tmp;
         }
     };
@@ -71,13 +74,15 @@ namespace impl
     struct weighted_variance_impl
       : accumulator_base
     {
-        typedef typename numeric::functional::multiplies<Sample, Weight>::result_type weighted_sample;
+		typedef BOOST_TYPEOF(numeric::pow(declval<Sample>(), mpl::int_<2>())) sum_type;
+
+        typedef typename numeric::functional::multiplies<sum_type, Weight>::result_type weighted_sample;
         // for boost::result_of
         typedef typename numeric::functional::fdiv<weighted_sample, Weight>::result_type result_type;
 
         template<typename Args>
         weighted_variance_impl(Args const &args)
-          : weighted_variance(numeric::fdiv(args[sample | Sample()], numeric::one<Weight>::value))
+          : weighted_variance(numeric::fdiv(numeric::pow(args[sample | Sample()], mpl::int_<2>()), numeric::one<Weight>::value))
         {
         }
 
@@ -90,7 +95,7 @@ namespace impl
             {
                 extractor<MeanFeature> const some_mean = {};
 
-                result_type tmp = args[parameter::keyword<Tag>::get()] - some_mean(args);
+                const auto tmp = args[parameter::keyword<Tag>::get()] - some_mean(args);
 
                 this->weighted_variance =
                     numeric::fdiv(this->weighted_variance * (sum_of_weights(args) - args[weight]), sum_of_weights(args))

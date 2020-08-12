@@ -38,13 +38,16 @@ namespace impl
       : accumulator_base // TODO: also depends_on sum of powers
     {
         BOOST_MPL_ASSERT_RELATION(N::value, >, 0);
-        typedef typename numeric::functional::multiplies<Sample, Weight>::result_type weighted_sample;
+
+		typedef BOOST_TYPEOF(numeric::pow(declval<Sample>(), declval<N>())) sum_type;
+
+        typedef typename numeric::functional::multiplies<sum_type, Weight>::result_type weighted_sample;
         // for boost::result_of
         typedef typename numeric::functional::fdiv<weighted_sample, Weight>::result_type result_type;
 
         template<typename Args>
         weighted_moment_impl(Args const &args)
-          : sum(args[sample | Sample()] * numeric::one<Weight>::value)
+          : sum(numeric::pow(args[sample | Sample()], N()) * numeric::one<Weight>::value)
         {
         }
 

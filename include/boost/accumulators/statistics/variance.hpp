@@ -8,6 +8,7 @@
 #ifndef BOOST_ACCUMULATORS_STATISTICS_VARIANCE_HPP_EAN_28_10_2005
 #define BOOST_ACCUMULATORS_STATISTICS_VARIANCE_HPP_EAN_28_10_2005
 
+#include <boost/typeof/decltype.hpp>
 #include <boost/mpl/placeholders.hpp>
 #include <boost/accumulators/framework/accumulator_base.hpp>
 #include <boost/accumulators/framework/extractor.hpp>
@@ -41,8 +42,10 @@ namespace impl
     struct lazy_variance_impl
       : accumulator_base
     {
-        // for boost::result_of
-        typedef typename numeric::functional::fdiv<Sample, std::size_t>::result_type result_type;
+		typedef BOOST_TYPEOF(boost::numeric::pow(declval<Sample>(), declval<mpl::int_<2>>())) sum_type;
+
+		// for boost::result_of
+		typedef typename numeric::functional::fdiv<sum_type, std::size_t>::result_type result_type;
 
         lazy_variance_impl(dont_care) {}
 
@@ -50,7 +53,7 @@ namespace impl
         result_type result(Args const &args) const
         {
             extractor<MeanFeature> mean;
-            result_type tmp = mean(args);
+            const auto tmp = mean(args);
             return accumulators::moment<2>(args) - tmp * tmp;
         }
         
@@ -88,12 +91,14 @@ namespace impl
     struct variance_impl
       : accumulator_base
     {
-        // for boost::result_of
-        typedef typename numeric::functional::fdiv<Sample, std::size_t>::result_type result_type;
+		typedef BOOST_TYPEOF(boost::numeric::pow(declval<Sample>(), declval<mpl::int_<2>>())) sum_type;
+
+		// for boost::result_of
+		typedef typename numeric::functional::fdiv<sum_type, std::size_t>::result_type result_type;
 
         template<typename Args>
         variance_impl(Args const &args)
-          : variance(numeric::fdiv(args[sample | Sample()], numeric::one<std::size_t>::value))
+          : variance(numeric::fdiv(numeric::pow(args[sample | Sample()], mpl::int_<2>()), numeric::one<std::size_t>::value))
         {
         }
 
@@ -105,7 +110,7 @@ namespace impl
             if(cnt > 1)
             {
                 extractor<MeanFeature> mean;
-                result_type tmp = args[parameter::keyword<Tag>::get()] - mean(args);
+                auto tmp = args[parameter::keyword<Tag>::get()] - mean(args);
                 this->variance =
                     numeric::fdiv(this->variance * (cnt - 1), cnt)
                   + numeric::fdiv(tmp * tmp, cnt - 1);

@@ -44,7 +44,7 @@ struct sum_kahan_impl
     template<typename Args>
     sum_kahan_impl(Args const & args)
       : sum(args[parameter::keyword<Tag>::get() | Sample()]),
-        compensation(boost::numeric_cast<Sample>(0.0))
+        compensation()
     {
     }
 

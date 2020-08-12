@@ -15,6 +15,7 @@
 #include <boost/mpl/and.hpp>
 #include <boost/type_traits/remove_const.hpp>
 #include <boost/type_traits/add_reference.hpp>
+#include <boost/type_traits/add_pointer.hpp>
 #include <boost/type_traits/is_empty.hpp>
 #include <boost/type_traits/is_integral.hpp>
 #include <boost/type_traits/is_floating_point.hpp>
@@ -59,6 +60,86 @@ namespace std
 
 namespace boost { namespace numeric
 {
+	namespace impl
+	{
+		struct positive;
+		struct negative;
+		struct zero;
+		struct odd;
+		struct even;
+
+		template<int N>
+		struct integral_value_range
+		{
+			typedef typename boost::conditional<(N == 0), zero, typename boost::conditional< (N > 0), positive, negative>::type>::type type;
+		};
+
+		template<int N>
+		struct integral_parity
+		{
+			typedef typename boost::conditional<(N % 2), odd, even>::type type;
+		};
+
+		/// INTERNAL ONLY
+		///
+		template<typename T, int N>
+		auto pow_odd_even(T const &x, mpl::int_<N>, const odd * parity)
+		{
+			using namespace operators;
+			const auto y = numeric::pow(x, mpl::int_<N / 2>());
+			return y * y * x;
+		}
+
+		template<typename T, int N>
+		auto pow_odd_even(T const &x, mpl::int_<N>, const even * parity)
+		{
+			using namespace operators;
+			const auto y = numeric::pow(x, mpl::int_<N / 2>());
+			return y * y;
+		}
+
+		template<typename T, int N>
+		auto pow_pos_negative(T const &x, mpl::int_<N>, const positive * sign)
+		{
+			return pow_odd_even(x, mpl::int_<N>(), static_cast<typename boost::add_pointer<typename impl::integral_parity<N>::type>::type>(nullptr));
+		}
+
+		template<typename T, int N>
+		auto pow_pos_negative(T const &x, mpl::int_<N>, const zero * sign)
+		{
+			return pow(x, mpl::int_<N>());
+		}
+
+		template<typename T, int N>
+		auto pow_pos_negative(T const &x, mpl::int_<N>, const negative * sign)
+		{
+			return pow_pos_negative(x, mpl::int_<-N>, static_cast<typename boost::add_pointer<positive>(nullptr));
+		}
+	}
+
+	/// INTERNAL ONLY
+		///
+	template<typename T>
+	const auto pow(T const &x, mpl::int_<0>)
+	{
+		BOOST_ASSERT(x != numeric::zero<T>::value);
+		return 1;
+	}
+
+	/// INTERNAL ONLY
+	///
+	template<typename T>
+	T const &pow(T const &x, mpl::int_<1>)
+	{
+		return x;
+	}
+
+	template<typename T, int N>
+	auto pow(T const &x, mpl::int_<N>)
+	{
+		return impl::pow_pos_negative(x, mpl::int_<N>(), static_cast<typename boost::add_pointer<typename impl::integral_value_range<N>::type>::type>(nullptr));
+	}
+
     namespace functional
     {
         /// INTERNAL ONLY

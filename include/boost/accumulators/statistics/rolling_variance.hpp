@@ -9,6 +9,7 @@
 #ifndef BOOST_ACCUMULATORS_STATISTICS_ROLLING_VARIANCE_HPP_EAN_15_11_2011
 #define BOOST_ACCUMULATORS_STATISTICS_ROLLING_VARIANCE_HPP_EAN_15_11_2011
 
+#include <boost/typeof/decltype.hpp>
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/stats.hpp>
 
@@ -49,16 +50,18 @@ namespace impl
     struct lazy_rolling_variance_impl
         : accumulator_base
     {
+		typedef BOOST_TYPEOF(numeric::pow(declval<Sample>(), declval<mpl::int_<2>>())) sum_type;
+
         // for boost::result_of
-        typedef typename numeric::functional::fdiv<Sample, std::size_t,void,void>::result_type result_type;
+        typedef typename numeric::functional::fdiv<sum_type, std::size_t,void,void>::result_type result_type;
 
         lazy_rolling_variance_impl(dont_care) {}
 
         template<typename Args>
         result_type result(Args const &args) const
         {
-            result_type mean = rolling_mean(args);
-            size_t nr_samples = rolling_count(args);
+            const auto mean = rolling_mean(args);
+            const size_t nr_samples = rolling_count(args);
             if (nr_samples < 2) return result_type();
             return nr_samples*(rolling_moment<2>(args) - mean*mean)/(nr_samples-1);
         }
@@ -108,13 +111,17 @@ namespace impl
     struct immediate_rolling_variance_impl
         : accumulator_base
     {
+		typedef BOOST_TYPEOF(numeric::fdiv(declval<Sample>(), declval<std::size_t>())) mean_type;
+		
+		typedef BOOST_TYPEOF(numeric::pow(declval<Sample>(), declval<mpl::int_<2>>())) sum_type;
+
         // for boost::result_of
-        typedef typename numeric::functional::fdiv<Sample, std::size_t>::result_type result_type;
+        typedef typename numeric::functional::fdiv<sum_type, std::size_t>::result_type result_type;
 
         template<typename Args>
         immediate_rolling_variance_impl(Args const &args)
             : previous_mean_(numeric::fdiv(args[sample | Sample()], numeric::one<std::size_t>::value))
-            , sum_of_squares_(numeric::fdiv(args[sample | Sample()], numeric::one<std::size_t>::value))
+            , sum_of_squares_(numeric::fdiv(numeric::pow(args[sample | Sample()], mpl::int_<2>()), numeric::one<std::size_t>::value))
         {
         }
 
@@ -123,7 +130,7 @@ namespace impl
         {
             Sample added_sample = args[sample];
 
-            result_type mean = immediate_rolling_mean(args);
+			mean_type mean = immediate_rolling_mean(args);
             sum_of_squares_ += (added_sample-mean)*(added_sample-previous_mean_);
 
             if(is_rolling_window_plus1_full(args))
@@ -153,8 +160,8 @@ namespace impl
 
     private:
 
-        result_type previous_mean_;
-        result_type sum_of_squares_;
+		mean_type previous_mean_;
+		sum_type sum_of_squares_;
 
         template<typename T>
         void prevent_underflow(T &non_negative_number,typename boost::enable_if<boost::is_arithmetic<T>,T>::type* = 0)

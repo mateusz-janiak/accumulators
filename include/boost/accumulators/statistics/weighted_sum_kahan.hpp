@@ -45,7 +45,7 @@ namespace impl
         weighted_sum_kahan_impl(Args const &args)
           : weighted_sum_(
                 args[parameter::keyword<Tag>::get() | Sample()] * numeric::one<Weight>::value),
-                compensation(boost::numeric_cast<weighted_sample>(0.0))
+                compensation()
         {
         }
 

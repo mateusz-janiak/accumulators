@@ -9,6 +9,7 @@
 #ifndef BOOST_ACCUMULATORS_STATISTICS_ROLLING_MOMENT_HPP_EAN_27_11_2005
 #define BOOST_ACCUMULATORS_STATISTICS_ROLLING_MOMENT_HPP_EAN_27_11_2005
 
+#include <boost/typeof/decltype.hpp>
 #include <boost/config/no_tr1/cmath.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/assert.hpp>
@@ -33,12 +34,15 @@ namespace impl
       : accumulator_base
     {
         BOOST_MPL_ASSERT_RELATION(N::value, >, 0);
+
+		typedef BOOST_TYPEOF(numeric::pow(declval<Sample>(), declval<N>())) sum_type;
+
         // for boost::result_of
-        typedef typename numeric::functional::fdiv<Sample, std::size_t,void,void>::result_type result_type;
+        typedef typename numeric::functional::fdiv<sum_type, std::size_t,void,void>::result_type result_type;
 
         template<typename Args>
         rolling_moment_impl(Args const &args)
-          : sum_(args[sample | Sample()])
+          : sum_(numeric::pow(args[sample | Sample()], N()))
         {
         }
 

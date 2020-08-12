@@ -125,7 +125,7 @@ namespace impl
                     tail(args).begin()
                   , tail(args).begin() + n
                   , tail_weights(args).begin()
-                  , weighted_sample(0)
+                  , weighted_sample()
                 )
               , sum
             );

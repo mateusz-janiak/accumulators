@@ -121,7 +121,7 @@ namespace impl
                              * ( ( is_same<LeftRight, left>::value ) ? args[quantile_probability] : 1. - args[quantile_probability] );
 
             std::size_t n = 0;
-            Weight sum = Weight(0);
+            Weight sum = Weight();
 
             while (sum < threshold)
             {
@@ -152,7 +152,7 @@ namespace impl
             std::size_t num_variates = tail_variate(args).begin()->size();
 
             this->tail_means_.clear();
-            this->tail_means_.resize(num_variates, Sample(0));
+            this->tail_means_.resize(num_variates, Sample());
 
             this->tail_means_ = std::inner_product(
                 tail_variate(args).begin()
